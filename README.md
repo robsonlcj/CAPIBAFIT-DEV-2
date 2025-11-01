@@ -60,20 +60,28 @@ O sistema incentiva o usuário a se exercitar e o recompensa com moedas Capiba, 
 ## 🧱 Estrutura do Projeto
 
 ```
-CapibaFit/
-├── README.md              → Descrição geral do projeto
-├── docs/                  → Documentação e materiais do projeto
-│   └── prototipo/         → Telas e wireframes
-├── architecture/          → Decisões arquiteturais (ADRs)
-│   ├── ADR-001-tecnologias.md
-│   ├── ADR-002-banco-de-dados.md
-│   └── ADR-003-arquitetura-geral.md
-├── src/                   → Código-fonte (frontend e backend)
-│   ├── frontend/          → Interface do usuário
-│   └── backend/           → Lógica de negócio e APIs
-├── tests/                 → Testes automatizados
-├── .gitignore
-└── LICENSE
+devsofot-2025-2/
+├── README.md                  → Descrição geral do projeto
+├── architecture/              → Decisões arquiteturais (ADRs)
+│   └── readme.txt
+├── docs/                      → Documentação e materiais do projeto
+│   ├── decisions/             → ADRs detalhadas
+│   │   ├── 0001-definição-da-fonte-de-dados-para-atividades.md
+│   │   ├── 0002-mecanismo-de-comunicação-para-sincronização.md
+│   │   ├── 0003-serviço-de-geolocalização-geofencing.md
+│   │   ├── 0004-modelo-de-processamento-para-gamificação.md
+│   │   └── 0005-contabilização-do-bônus-progressivo.md
+│   └── readme.txt
+│   └── prototipo/             → Telas e wireframes
+├── src/                       → Código-fonte (frontend e backend)
+│   ├── backend/               → Lógica de negócio e APIs
+│   │   └── readme.txt
+│   ├── frontend/              → Interface do usuário
+│   │   └── readme.txt
+│   └── readme.txt
+├── tests/                     → Testes automatizados
+│   └── readme.txt
+└── README.md
 ```
 
 ---
@@ -87,7 +95,7 @@ As **ADRs (Architecture Decision Records)** documentam as principais decisões t
 - Padrões de arquitetura (ex: MVC, REST, etc.);  
 - Estratégias de autenticação, cache e escalabilidade.  
 
-Esses arquivos ficam em `/architecture/` e ajudam a manter a rastreabilidade técnica do projeto.
+Esses arquivos ficam em `/docs/decisions/` para rastreabilidade técnica.
 
 ---
 

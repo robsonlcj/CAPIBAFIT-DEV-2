@@ -1,10 +1,17 @@
 import CapibaraIcon from '../../assets/icon.png';
 import BotaoSincronizar from '../../components/syncbutton/syncbutton';
+import { useEffect } from 'react';
+import { updateBalanceDisplay } from '../../frontend/services/BalanceService.js';
 
-function Home(){
-    const totalAcumulado = 820; 
+function Home() {
+    const totalAcumulado = 820;
 
-    return(
+    // Atualiza o saldo assim que o componente for montado
+    useEffect(() => {
+        updateBalanceDisplay();
+    }, []);
+
+    return (
         <div className="extrato-container">
             <h2 className="extrato-titulo">Extrato de Capibas</h2>
 
@@ -20,7 +27,9 @@ function Home(){
                 
                 <div className="texto-valor-wrapper">
                     <p className="texto-acumulado">Total Acumulado</p>
-                    <span className="valor-acumulado">{totalAcumulado}</span>
+                    <span id="capiba-balance-field" className="valor-acumulado">
+                        {totalAcumulado}
+                    </span>
                 </div>
                 
                 <div className="icones-moeda-wrapper">
@@ -29,11 +38,9 @@ function Home(){
                 </div>
             </div>
 
-            {/* 💡 2. Renderizar o Botão de Sincronização */}
             <div className="sincronizar-wrapper"> 
                 <BotaoSincronizar />
             </div>
-
         </div>
     );
 }

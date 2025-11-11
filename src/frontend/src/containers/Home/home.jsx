@@ -1,17 +1,12 @@
 import CapibaraIcon from '../../assets/icon.png';
-import BotaoSincronizar from '../../components/syncbutton/syncbutton';
-import { useEffect } from 'react';
-import { updateBalanceDisplay } from '../../frontend/services/BalanceService.js';
+import StartButton from '../../components/StartButton/Start'
+import CardDesafio from '../../components/CardsDesafio/CardDesafio';
 
-function Home() {
-    const totalAcumulado = 820;
+function Home(){
+    const totalAcumulado = 820; 
 
-    // Atualiza o saldo assim que o componente for montado
-    useEffect(() => {
-        updateBalanceDisplay();
-    }, []);
-
-    return (
+    return(
+    <div className="home-container">
         <div className="extrato-container">
             <h2 className="extrato-titulo">Extrato de Capibas</h2>
 
@@ -27,9 +22,7 @@ function Home() {
                 
                 <div className="texto-valor-wrapper">
                     <p className="texto-acumulado">Total Acumulado</p>
-                    <span id="capiba-balance-field" className="valor-acumulado">
-                        {totalAcumulado}
-                    </span>
+                    <span className="valor-acumulado">{totalAcumulado}</span>
                 </div>
                 
                 <div className="icones-moeda-wrapper">
@@ -37,11 +30,14 @@ function Home() {
                     <span className="icone-moeda dois" aria-hidden="true"></span>
                 </div>
             </div>
-
-            <div className="sincronizar-wrapper"> 
-                <BotaoSincronizar />
-            </div>
         </div>
+        <div className='StartButton'>
+            <StartButton onClick={() => alert('Atividade Iniciada!')} />
+        </div>
+        <div className='CardsDesafios'>
+           
+        </div>
+    </div>
     );
 }
 

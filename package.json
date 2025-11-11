@@ -5,7 +5,7 @@
   "description": "Projeto de atividade física com recompensas Capiba",
   "main": "index.js",
   "scripts": {
-    "start": "node index.js",
+    "start": "npm --prefix src/frontend run dev",
     "test": "jest"
   },
   "keywords": [
@@ -15,7 +15,9 @@
     "recife"
   ],
   "dependencies": {
+    "cors": "^2.8.5",
     "express": "^4.18.2",
+    "i": "^0.3.7",
     "pg": "^8.11.3"
   },
   "devDependencies": {

@@ -8,7 +8,7 @@
  */
 
 // A função que realmente faz o trabalho pesado é importada aqui
-import { processAndCreditActivity } from './rewardEngine';
+import { processAndCreditActivity } from '../services/rewardEngine.js';
 
 // Array simples para simular a fila de tarefas pendentes (apenas para demonstração)
 const activityQueue = []; 

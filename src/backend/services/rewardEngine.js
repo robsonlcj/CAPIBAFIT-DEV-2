@@ -18,8 +18,8 @@
 // - A função processAndCreditActivity retorna objetos simples com success=true/false
 //   e mensagem/erro para que a camada superior (rotas) converta em respostas HTTP.
 
-import { requestCapibaCredit } from '../integrations/capibaApi';
-import { query } from '../database/db_connection';
+import { requestCapibaCredit } from '../integrations/capibaApi.js';
+import { query } from '../database/db_connection.js';
 
 // --- Regras de Negócio ---
 // Fator que converte distância (km) em Capibas. Pode ser string via env; coerce se necessário.

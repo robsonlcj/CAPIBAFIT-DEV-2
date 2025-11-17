@@ -1,10 +1,12 @@
 import CapibaraIcon from '../../assets/icon.png';
-import BotaoSincronizar from '../../components/syncbutton/syncbutton';
+import StartButton from '../../components/StartButton/Start'
+import CardDesafio from '../../components/CardsDesafio/CardDesafio';
 
 function Home(){
     const totalAcumulado = 820; 
 
     return(
+    <div className="home-container">
         <div className="extrato-container">
             <h2 className="extrato-titulo">Extrato de Capibas</h2>
 
@@ -28,13 +30,14 @@ function Home(){
                     <span className="icone-moeda dois" aria-hidden="true"></span>
                 </div>
             </div>
-
-            {/* 💡 2. Renderizar o Botão de Sincronização */}
-            <div className="sincronizar-wrapper"> 
-                <BotaoSincronizar />
-            </div>
-
         </div>
+        <div className='StartButton'>
+            <StartButton onClick={() => alert('Atividade Iniciada!')} />
+        </div>
+        <div className='CardsDesafios'>
+           
+        </div>
+    </div>
     );
 }
 

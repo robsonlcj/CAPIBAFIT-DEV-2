@@ -3,13 +3,17 @@ CREATE TABLE users (
     user_id VARCHAR(255) PRIMARY KEY, 
     
     -- Saldo atualizado da moeda Capiba (deve ser sincronizado com a Prefeitura)
-    capiba_balance INTEGER NOT NULL DEFAULT 0, 
+    balance INTEGER NOT NULL DEFAULT 0, 
     
     -- Usado para calcular streaks (sequências de dias ativos)
     last_activity_date DATE, 
     
     -- Contador atual de dias consecutivos de atividade
     current_streak_count INTEGER NOT NULL DEFAULT 0, 
+
+    -- Indica se o usuário já resgatou o bônus de boas-vindas 
+    has_claimed_welcome_bonus BOOLEAN NOT NULL DEFAULT FALSE,
+
     
     -- Metadados
     created_at TIMESTAMP WITHOUT TIME ZONE DEFAULT CURRENT_TIMESTAMP
@@ -36,4 +40,7 @@ CREATE TABLE transactions (
 
     -- Metadados
     created_at TIMESTAMP WITHOUT TIME ZONE DEFAULT CURRENT_TIMESTAMP
+
+    -- Índice para melhorar a performance de consultas por usuário
+    external_ref_id VARCHAR(255)
 );

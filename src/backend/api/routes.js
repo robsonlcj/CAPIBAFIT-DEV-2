@@ -81,5 +81,21 @@ router.get('/users/:userId/balance', async (req, res) => {
     }
 });
 
-
+// Rota de teste da conexão com o banco de dados
 export default router;
+
+router.get('/test-db', async (req, res) => {
+    try {
+        const result = await query('SELECT NOW()');
+        return res.status(200).json({
+            ok: true,
+            time: result.rows[0].now
+        });
+    } catch (error) {
+        console.error("Erro ao testar conexão com o banco:", error);
+        return res.status(500).json({
+            ok: false,
+            error: error.message
+        });
+    }
+});

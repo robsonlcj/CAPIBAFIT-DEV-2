@@ -1,49 +1,48 @@
-import 'dotenv/config';   // <--- ESSENCIAL!
-import { Pool } from 'pg';
+// src/backend/database/db_connection.js
 
-/*
- * Conexão com o banco de dados PostgreSQL usando um pool de conexões
- * fornecido pelo pacote 'pg'.
- 
- 
- * Contrato / uso:
- * - Variáveis de ambiente (obrigatórias/esperadas):
- *   DB_USER, DB_HOST, DB_NAME, DB_PASSWORD, DB_PORT
- * - Exporta a função `query(text, params)` que replica a API do pool
- *   (`pool.query`) e retorna uma Promise com o resultado da consulta.
- 
+import dotenv from "dotenv";
+import path from "path";
+import { fileURLToPath } from "url";
 
- * Observações de robustez:
- * - `DB_PORT` pode vir como string; aqui fazemos parse para número
- *   e usamos 5432 como fallback padrão.
- * - Erros de conexão/consulta são propagados ao chamador para que
- *   as rotas/serviços possam tratá-los (retry/log/etc.).
- */
-const pool = new Pool({
-    user: process.env.DB_USER,
-    host: process.env.DB_HOST,
-    database: process.env.DB_NAME,
-    password: process.env.DB_PASSWORD,  // agora vem como string
-    port: process.env.DB_PORT ? parseInt(process.env.DB_PORT, 10) : 5432,
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+// Carrega o .env que está na pasta backend
+dotenv.config({
+  path: path.join(__dirname, "..", ".env")
 });
 
 
+console.log("DEBUG POOL LOAD:", {
+  DB_USER: process.env.DB_USER,
+  DB_PASSWORD: process.env.DB_PASSWORD,
+  DB_HOST: process.env.DB_HOST,
+  DB_NAME: process.env.DB_NAME,
+  DB_PORT: process.env.DB_PORT
+});
 
-/**
- * query(text, params?): Promise
- *
- * Wrapper simples em cima de `pool.query` para manter um ponto único
- * de acesso ao banco na aplicação. Recebe SQL/texto e parâmetros
- * (quando usarem prepared statements) e retorna a Promise do driver.
- *
- * Exemplos:
- *   const res = await query('SELECT * FROM users WHERE id = $1', [id]);
- *   const rows = res.rows;
- *
- * Erros (ex.: credenciais inválidas, timeout) são lançados e devem ser
- * tratados pelo chamador (try/catch em rotas ou middleware de erro).
- */
+import pkg from "pg";
+const { Pool } = pkg;
 
+// Cria a pool DEPOIS do dotenv carregar
+const pool = new Pool({
+  user: process.env.DB_USER,
+  host: process.env.DB_HOST,
+  database: process.env.DB_NAME,
+  password: process.env.DB_PASSWORD,
+  port: Number(process.env.DB_PORT),
+  ssl: false
+});
 
-// Exporta uma função utilitária para executar consultas SQL
-export const query = (text, params) => pool.query(text, params);
+// Função de consulta (só uma!)
+export async function query(text, params) {
+  try {
+    const result = await pool.query(text, params);
+    return result;
+  } catch (err) {
+    console.error("Erro na consulta:", err);
+    throw err;
+  }
+}
+
+export default pool;

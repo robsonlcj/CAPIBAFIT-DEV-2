@@ -1,107 +1,231 @@
-import React from 'react';
+// src/components/Onboarding/ChallengeCard.jsx
+import React from "react";
 
-// Mapeamento para tags Web/HTML
-const View = 'div';
-const Text = 'p';
+const View = "div";
+const Text = "p";
 const StyleSheet = { create: (s) => s };
 
-// Estilos específicos para o cartão de desafio
-const cardStyles = StyleSheet.create({
-    fullContainer: {
-        display: 'flex',
-        flexDirection: 'column',
-        alignItems: 'center',
-        padding: 20,
-        backgroundColor: '#f9f9f9',
-        height: '100vh', // Ocupa a tela inteira
-    },
-    // Estilos do cabeçalho (Desafio de Boas-Vindas)
-    headerIcon: {
-        fontSize: 60,
-        color: '#00cc66',
-        marginBottom: 10,
-    },
-    headerTitle: {
-        fontSize: 28,
-        fontWeight: 'bold',
-        color: '#ff9900', // Cor do título CapibaFit
-        marginBottom: 5,
-    },
-    headerSubtitle: {
-        fontSize: 16,
-        color: '#666',
-        marginBottom: 30,
-    },
-    // Estilos do cartão principal (Regras)
-    mainCard: {
-        backgroundColor: 'white',
-        borderRadius: 12,
+// Estilos recriados fielmente ao protótipo
+const styles = StyleSheet.create({
+    container: {
+        display: "flex",
+        flexDirection: "column",
+        alignItems: "center",
         padding: 25,
-        width: '90%',
-        maxWidth: 400,
-        boxShadow: '0 4px 8px rgba(0,0,0,0.1)',
+        paddingTop: 40,
+        backgroundColor: "#F7F9FA",
+        minHeight: "100vh",
+        overflowY: "auto",
+    },
+
+    // Cabeçalho
+    badgeWrapper: {
+        width: 90,
+        height: 90,
+        borderRadius: 100,
+        backgroundColor: "#00D07D",
+        display: "flex",
+        justifyContent: "center",
+        alignItems: "center",
+        boxShadow: "0 6px 12px rgba(0,0,0,0.15)",
+        position: "relative",
+        marginBottom: 20,
+    },
+    badgeEmoji: {
+        fontSize: 40,
+    },
+    badgeBolt: {
+        position: "absolute",
+        right: -5,
+        top: -5,
+        fontSize: 22,
+    },
+
+    headerTitle: {
+        fontSize: 26,
+        fontWeight: "bold",
+        marginBottom: 5,
+        textAlign: "center",
+        color: "#1A8F2E",
+    },
+    headerTitleHighlight: {
+        color: "#F08A00",
+    },
+    subtitle: {
+        fontSize: 15,
+        color: "#777",
         marginBottom: 30,
-        textAlign: 'center',
+        textAlign: "center",
     },
-    bonusTitle: {
-        fontSize: 20,
-        fontWeight: 'bold',
-        color: '#333',
+
+    // Card principal
+    card: {
+        backgroundColor: "#FFFFFF",
+        borderRadius: 18,
+        width: "92%",
+        maxWidth: 440,
+        padding: 25,
+        boxShadow: "0 4px 10px rgba(0,0,0,0.08)",
+        marginBottom: 25,
+    },
+
+    bonusTag: {
+        backgroundColor: "#E9FAEE",
+        borderRadius: 20,
+        padding: "6px 16px",
+        fontWeight: "bold",
+        width: "fit-content",
+        margin: "0 auto 20px auto",
+        display: "flex",
+        alignItems: "center",
+        gap: 6,
+        fontSize: 17,
+    },
+
+    title: {
+        fontSize: 22,
+        fontWeight: "bold",
         marginBottom: 15,
+        textAlign: "center",
     },
-    // Botões de ação
-    buttonAccept: {
-        backgroundColor: '#00cc66',
-        color: 'white',
-        padding: '12px 20px',
-        borderRadius: 8,
-        fontSize: 18,
-        fontWeight: 'bold',
-        cursor: 'pointer',
-        border: 'none',
+
+    rulesList: {
         marginTop: 20,
-        width: '100%',
+        padding: 0,
     },
-    buttonSkip: {
+
+    ruleItem: {
+        display: "flex",
+        alignItems: "flex-start",
+        gap: 12,
+        marginBottom: 12,
+    },
+
+    ruleNumber: {
+        width: 26,
+        height: 26,
+        borderRadius: 100,
+        backgroundColor: "#DFFFEF",
+        color: "#00B067",
+        fontWeight: "bold",
+        display: "flex",
+        justifyContent: "center",
+        alignItems: "center",
+    },
+
+    // Box de atenção
+    alertBox: {
+        marginTop: 25,
+        padding: 18,
+        borderRadius: 12,
+        backgroundColor: "#FFF7D9",
+        border: "1px solid #FFE08A",
+        color: "#7A5A00",
         fontSize: 14,
-        color: '#999',
-        cursor: 'pointer',
-        marginTop: 15,
-        textDecoration: 'underline',
-    }
+        lineHeight: 1.45,
+    },
+
+    // Botão principal
+    buttonPrimary: {
+        backgroundColor: "#0AC26D",
+        color: "#fff",
+        padding: "16px 20px",
+        borderRadius: 12,
+        fontSize: 18,
+        fontWeight: "bold",
+        cursor: "pointer",
+        border: "none",
+        marginTop: 25,
+        width: "92%",
+        maxWidth: 440,
+        display: "flex",
+        justifyContent: "center",
+        alignItems: "center",
+        gap: 8,
+        boxShadow: "0 4px 10px rgba(0,0,0,0.15)",
+    },
+
+    skipText: {
+        fontSize: 15,
+        color: "#999",
+        marginTop: 18,
+        textDecoration: "underline",
+        cursor: "pointer",
+        marginBottom: 20,
+    },
 });
 
-// Componente burro que exibe o cartão e recebe a ação do clique.
-const ChallengeCard = ({ onAccept, isAccepting }) => {
+const ChallengeCard = ({ onAccept, onSkip, isAccepting }) => {
     return (
-        <View style={cardStyles.fullContainer}>
-            {/* Cabeçalho */}
-            <Text style={cardStyles.headerIcon}>🎁</Text>
-            <Text style={cardStyles.headerTitle}>Desafio de Boas-Vindas!</Text>
-            <Text style={cardStyles.headerSubtitle}>Oferta exclusiva para novos usuários</Text>
+        <View style={styles.container}>
 
-            {/* Cartão de Detalhes */}
-            <View style={cardStyles.mainCard}>
-                <Text style={cardStyles.bonusTitle}>Ganhe o Dobro de Capibas!</Text>
-                <Text>
-                    Complete **1 km** de qualquer atividade física e ganhe **60 Capibas** (equivalente a 2 km)!
-                </Text>
-
-                {/* Regras */}
-                <ol style={{ textAlign: 'left', marginTop: 15, listStylePosition: 'inside' }}>
-                    <li><Text>Escolha entre Caminhada, Corrida ou Bicicleta</Text></li>
-                    <li><Text>Complete apenas 1 km de distância</Text></li>
-                    <li><Text>Receba 60 Capibas automaticamente!</Text></li>
-                </ol>
+            {/* Badge de presente */}
+            <View style={styles.badgeWrapper}>
+                <Text style={styles.badgeEmoji}>🎁</Text>
+                <Text style={styles.badgeBolt}>⚡</Text>
             </View>
 
-            {/* Ações */}
-            <button style={cardStyles.buttonAccept} onClick={onAccept} disabled={isAccepting}>
-                {isAccepting ? 'Aguarde...' : 'Aceitar Desafio →'}
-            </button>
-            <Text style={cardStyles.buttonSkip} onClick={() => onAccept(false)}>
-                Pular por enquanto
+            {/* Título */}
+            <Text style={styles.headerTitle}>
+                Desafio de <span style={styles.headerTitleHighlight}>Boas-Vindas!</span>
             </Text>
+            <Text style={styles.subtitle}>Oferta exclusiva para novos usuários</Text>
+
+            {/* Card principal */}
+            <View style={styles.card}>
+
+                {/* Badge verde 2x */}
+                <View style={styles.bonusTag}>
+                    2x <span>🪙</span>
+                </View>
+
+                <Text style={styles.title}>Ganhe o Dobro de Capibas!</Text>
+
+                <Text style={{ textAlign: "center" }}>
+                    Complete <b>1 km</b> de qualquer atividade física e ganhe{" "}
+                    <b>60 Capibas</b> (2x o valor padrão de 30)!
+                </Text>
+
+                {/* Lista de regras */}
+                <div style={styles.rulesList}>
+                    {[
+                        "Escolha entre Caminhada, Corrida ou Bicicleta",
+                        "Complete apenas 1 km de distância",
+                        "A atividade será finalizada automaticamente em 1 km",
+                        "Receba 60 Capibas de recompensa!",
+                    ].map((item, index) => (
+                        <div key={index} style={styles.ruleItem}>
+                            <div style={styles.ruleNumber}>{index + 1}</div>
+                            <Text>{item}</Text>
+                        </div>
+                    ))}
+                </div>
+
+                {/* Atenção */}
+                <View style={styles.alertBox}>
+                    <b>⚠ Atenção:</b><br/><br/>
+                    • Se você cancelar antes de 1 km, receberá apenas os Capibas normais pela distância percorrida.<br/>
+                    • O desafio recomeça se você finalizar manualmente.<br/>
+                    • Este desafio só está disponível uma vez!
+                </View>
+
+            </View>
+
+            {/* Botão aceitar */}
+            <button
+                style={styles.buttonPrimary}
+                onClick={onAccept}
+                disabled={isAccepting}
+            >
+                {isAccepting ? "Aguarde..." : "Aceitar Desafio"}
+                {!isAccepting && "→"}
+            </button>
+
+            {/* Pular */}
+            <Text style={styles.skipText} onClick={onSkip}>
+                ✖ Pular por enquanto
+            </Text>
+
         </View>
     );
 };

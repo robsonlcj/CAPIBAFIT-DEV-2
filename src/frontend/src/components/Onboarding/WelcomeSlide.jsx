@@ -1,65 +1,91 @@
+// src/frontend/src/components/Onboarding/WelcomeSlide.jsx
 import React from 'react';
 
-// Mapeamento para tags Web/HTML para que o Vite compile (necessário no ambiente atual)
+// Importa o componente de logo
+import CapibaLogo from '../Logo/CapibaLogo.jsx'; 
+
+// Mapeamento para tags Web
 const View = 'div';
 const Text = 'p';
-// Mantém StyleSheet.create como um placeholder para simular estilos React Native
 const StyleSheet = { create: (s) => s };
 
-// Estilos básicos do Slide (focar em centralizar e dar padding)
+// Estilos do Slide - Focados em Layout, Tipografia e Sizing
 const slideStyles = StyleSheet.create({
     container: {
         display: 'flex',
         flexDirection: 'column',
         alignItems: 'center',
-        justifyContent: 'center',
-        padding: 40,
+        justifyContent: 'space-between', 
+        padding: 0, 
         height: '100%',
+        width: '100%',
         textAlign: 'center',
     },
+    contentWrapper: {
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        justifyContent: 'center', 
+        flexGrow: 1, 
+    },
     iconContainer: {
-        width: 100,
-        height: 100,
-        borderRadius: 50,
-        backgroundColor: '#00cc66', // Cor primária do CapibaFit
+        width: 150, 
+        height: 150, 
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        marginBottom: 20,
+        marginBottom: 30,
+        marginTop: 0, 
+        overflow: 'hidden',
+    },
+    iconImage: {
+        width: '100%', 
+        height: '100%',
+        objectFit: 'contain',
+        backgroundColor: 'transparent',
     },
     title: {
         fontSize: 24,
         fontWeight: 'bold',
         marginBottom: 10,
         color: '#333',
+        fontFamily: 'Arial, sans-serif',
     },
     description: {
         fontSize: 16,
         color: '#666',
         paddingHorizontal: 20,
-    },
-    // Placeholder para ícone
-    iconText: {
-        fontSize: 36,
-        color: 'white',
+        fontFamily: 'Arial, sans-serif',
     }
 });
 
-// Este é o componente burro (dumb component)
-// Ele recebe o conteúdo (dados) via props e apenas foca na renderização.
-const WelcomeSlide = ({ title, description, iconSymbol }) => {
+/**
+ * Componente que renderiza o conteúdo de cada slide do Onboarding.
+ * Agora aceita qualquer imagem passada via props "icon".
+ */
+const WelcomeSlide = ({ title, description, icon }) => {
     return (
         <View style={slideStyles.container}>
-            {/* Bloco do Ícone */}
-            <View style={slideStyles.iconContainer}>
-                <Text style={slideStyles.iconText}>{iconSymbol}</Text>
+
+            {/* 1. CABEÇALHO DA MARCA */}
+            <CapibaLogo />
+
+            {/* 2. Conteúdo principal */}
+            <View style={slideStyles.contentWrapper}>
+
+                {/* Ícone do slide */}
+                <View style={slideStyles.iconContainer}>
+                    <img 
+                        src={icon}
+                        alt="Ícone do slide"
+                        style={slideStyles.iconImage}
+                    />
+                </View>
+
+                {/* Título e descrição */}
+                <Text style={slideStyles.title}>{title}</Text>
+                <Text style={slideStyles.description}>{description}</Text>
             </View>
-            
-            {/* Título do Slide */}
-            <Text style={slideStyles.title}>{title}</Text>
-            
-            {/* Descrição do Slide */}
-            <Text style={slideStyles.description}>{description}</Text>
         </View>
     );
 };

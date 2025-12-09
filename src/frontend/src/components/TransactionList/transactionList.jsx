@@ -1,17 +1,22 @@
 import React, { useEffect, useState } from 'react';
 import { getUserTransactions } from '../../services/balanceService'; 
 import '../../pages/style/style.css'; 
+
 export default function TransactionList() {
     const [transactions, setTransactions] = useState([]);
     const [loading, setLoading] = useState(true); 
+    const [error, setError] = useState(false); // 1. Novo estado para erro
 
     useEffect(() => {
         async function loadTransactions() {
             try {
+                // Reinicia o erro ao tentar buscar novamente
+                setError(false);
                 const data = await getUserTransactions();
                 setTransactions(data);
             } catch (error) {
                 console.error("Erro ao carregar extrato:", error);
+                setError(true); // 2. Ativa o erro se falhar
             } finally {
                 setLoading(false);
             }
@@ -20,8 +25,24 @@ export default function TransactionList() {
         loadTransactions();
     }, []);
 
+    // 3. Renderização do Spinner (Carregando)
     if (loading) {
-        return <div className="transacao-loading">Carregando extrato...</div>;
+        return (
+            <div className="loading-container">
+                <div className="spinner"></div>
+                <p>Carregando transações...</p>
+            </div>
+        );
+    }
+
+    // 4. Renderização de Erro
+    if (error) {
+        return (
+            <div className="error-container">
+                <p className="error-msg">Ops! Não foi possível carregar seu extrato.</p>
+                {/* Opcional: Botão para tentar de novo recarregando a página */}
+            </div>
+        );
     }
 
     return (
@@ -29,7 +50,8 @@ export default function TransactionList() {
             <h2 className="transacao-titulo">Extrato de Ganhos</h2>
             
             {transactions.length === 0 ? (
-                <p className="transacao-vazia">Nenhuma transação encontrada.</p>
+                // 5. Mensagem exata da Task
+                <p className="transacao-vazia">Sem transações ainda.</p>
             ) : (
                 <ul className="transacao-lista">
                     {transactions.map((t, index) => (

@@ -1,48 +1,20 @@
-// src/backend/database/db_connection.js
+import pg from 'pg';
+const { Pool } = pg;
 
-import dotenv from "dotenv";
-import path from "path";
-import { fileURLToPath } from "url";
-
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-
-// Carrega o .env que está na pasta backend
-dotenv.config({
-  path: path.join(__dirname, "..", ".env")
-});
-
-
-console.log("DEBUG POOL LOAD:", {
-  DB_USER: process.env.DB_USER,
-  DB_PASSWORD: process.env.DB_PASSWORD,
-  DB_HOST: process.env.DB_HOST,
-  DB_NAME: process.env.DB_NAME,
-  DB_PORT: process.env.DB_PORT
-});
-
-import pkg from "pg";
-const { Pool } = pkg;
-
-// Cria a pool DEPOIS do dotenv carregar
+// Configuração da conexão
 const pool = new Pool({
-  user: process.env.DB_USER,
-  host: process.env.DB_HOST,
-  database: process.env.DB_NAME,
-  password: process.env.DB_PASSWORD,
-  port: Number(process.env.DB_PORT),
-  ssl: false
+    user: process.env.DB_USER || 'postgres',
+    host: process.env.DB_HOST || 'localhost',
+    database: process.env.DB_NAME || 'capibafit',
+    password: process.env.DB_PASSWORD || 'sua_senha_aqui', // Atualize se necessário
+    port: process.env.DB_PORT || 5432,
 });
 
-// Função de consulta (só uma!)
-export async function query(text, params) {
-  try {
-    const result = await pool.query(text, params);
-    return result;
-  } catch (err) {
-    console.error("Erro na consulta:", err);
-    throw err;
-  }
-}
+// A CORREÇÃO ESTÁ AQUI:
+// Em vez de "export const pool = pool", usamos chaves para exportar:
+export { pool };
 
-export default pool;
+// Teste de conexão (opcional)
+pool.connect()
+    .then(() => console.log('✅ Banco de dados conectado com sucesso!'))
+    .catch(err => console.error('❌ Erro ao conectar no banco:', err));

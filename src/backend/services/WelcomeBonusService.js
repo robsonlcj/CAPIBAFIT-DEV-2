@@ -1,4 +1,4 @@
-import { query } from "../database/db_connection.js";
+import { pool } from "../database/db_connection.js";
 // Se você tiver esse arquivo, pode manter. Se não, use o valor fixo abaixo.
 import { calculateWelcomeBonus } from "../services/rewardEngine.js";
 

@@ -1,43 +1,49 @@
-import React, { useState } from "react";
-import axios from "axios"; 
-import { useNavigate } from "react-router-dom"; 
-import ChallengeCard from '../../components/Onboarding/ChallengeCard.jsx'; 
-
-const API_URL = 'http://localhost:3001/api'; 
-const userIdToTest = 1; 
+import React, { useContext } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { AuthContext } from '../../context/AuthContext';
+import api from '../../services/api'; // Importe sua API
 
 const WelcomeChallengeScreen = () => {
-    const navigate = useNavigate();
-    const [isProcessing, setIsProcessing] = useState(false); 
+  const navigate = useNavigate();
+  const { user, login } = useContext(AuthContext); // Precisamos do login para atualizar o estado local
 
-    const handleAccept = async () => {
-        setIsProcessing(true);
-        try {
-            await axios.post(`${API_URL}/challenges/welcome`, { 
-                userId: userIdToTest
-            });
-            alert("Desafio Aceito! 500 Capibas garantidas.");
-            // Aceitou? Vai para a aba de desafios ver o progresso
-            navigate('/desafios', { replace: true });
-        } catch (error) {
-            console.error(error);
-            alert("Erro ao aceitar.");
-            setIsProcessing(false);
+  const handleAccept = async () => {
+    try {
+        if (user?.user_id) {
+            // 1. Avisa o Backend que terminou
+            await api.post(`/users/${user.user_id}/complete-onboarding`);
+            
+            // 2. Atualiza o contexto local para o app não redirecionar de volta
+            // Criamos um novo objeto de usuário com first_login falso
+            const updatedUser = { ...user, first_login: false, welcome_challenge_completed: 'S' };
+            login(updatedUser);
         }
-    };
+        
+        // 3. Vai para a Home
+        navigate('/home');
 
-    const handleSkip = () => {
-        // Se pular aqui, vai pra Home. Só vê de novo se clicar na aba Desafios.
-        navigate('/home', { replace: true }); 
-    };
+    } catch (error) {
+        console.error("Erro ao finalizar onboarding:", error);
+        navigate('/home'); // Vai mesmo com erro para não travar
+    }
+  };
 
-    return (
-        <ChallengeCard 
-            onAccept={handleAccept} 
-            onSkip={handleSkip} 
-            isAccepting={isProcessing} 
-        />
-    );
+  return (
+    <div style={{ padding: 20, textAlign: 'center', paddingTop: 100 }}>
+      <h1>Desafio Aceito! 🚀</h1>
+      <p>Sua jornada começa agora.</p>
+      
+      <button 
+        onClick={handleAccept} 
+        style={{
+            marginTop: 30, padding: '15px 30px', background: '#E65100', 
+            color: 'white', border: 'none', borderRadius: 10, fontSize: '1.2rem'
+        }}
+      >
+        Bora pra Home!
+      </button>
+    </div>
+  );
 };
 
 export default WelcomeChallengeScreen;

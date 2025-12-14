@@ -1,4 +1,15 @@
-import 'dotenv/config'; 
+import dotenv from 'dotenv';
+
+dotenv.config({
+  path: './src/backend/.env'
+});
+
+
+console.log('DB_USER:', process.env.DB_USER);
+console.log('DB_HOST:', process.env.DB_HOST);
+console.log('DB_NAME:', process.env.DB_NAME);
+console.log('DB_PORT:', process.env.DB_PORT);
+
 import express from 'express';
 import cors from 'cors';
 import apiRouter from './api/routes.js'; // Importante ter o .js no final

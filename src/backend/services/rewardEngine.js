@@ -76,10 +76,14 @@ class RewardEngine {
                 ]);
 
                 // CORREÇÃO: user_id
-                const updateBalanceSql = `
-                    UPDATE users SET balance = balance + $1 WHERE user_id = $2 RETURNING balance;
-                `;
-                const updateResult = await pool.query(updateBalanceSql, [capibasToCredit, userId]);
+                const updateUserSql = `
+                    UPDATE users 
+                    SET balance = balance + $1,
+                    total_km = COALESCE(total_km, 0) + $2
+                    WHERE user_id = $3 
+                    RETURNING balance, total_km;
+            `;
+                const updateResult = await pool.query(updateUserSql, [capibasToCredit, distanceKm, userId]);
                 const newBalance = updateResult.rows[0]?.balance;
 
                 return { success: true, credited: capibasToCredit, details, balance: newBalance };

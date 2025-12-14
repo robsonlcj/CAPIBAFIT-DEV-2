@@ -1,3 +1,44 @@
+/* Reset Básico para tirar margens estranhas dos navegadores */
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  -webkit-tap-highlight-color: transparent; /* Remove flash azul no clique em mobile */
+}
+
+/* Aplicando a fonte Poppins no corpo todo */
+body {
+  font-family: 'Poppins', sans-serif;
+  background-color: #FAFAFA; /* Um cinza muito clarinho, melhor que branco puro */
+  color: #333; /* Texto cinza escuro é mais elegante que preto puro */
+  -webkit-font-smoothing: antialiased; /* Deixa a fonte mais nítida no Mac/iOS */
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Garante que botões e inputs também usem a fonte */
+button, input, textarea, select {
+  font-family: 'Poppins', sans-serif;
+}
+
+/* Efeito extra: Todo botão dá uma "afundadinha" ao clicar */
+button:active {
+  transform: scale(0.96);
+  transition: transform 0.1s;
+}
+
+/* Scrollbar mais bonita (para Webkit/Chrome) */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: #ccc;
+  border-radius: 10px;
+}
+
 /* Variáveis para fácil manutenção */
 :root {
   --verde-principal: #38c172; /* Verde vibrante do box */

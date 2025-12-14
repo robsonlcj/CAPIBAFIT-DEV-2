@@ -1,9 +1,12 @@
 import axios from 'axios';
 
-// Cria uma instância padrão do Axios
+// Pega o IP/Domínio que está na barra de endereço do navegador.
+// Se você abrir como localhost, ele usa localhost.
+// Se abrir como 192.168.1.X, ele usa 192.168.1.X.
+const ipAtual = window.location.hostname; 
+
 const api = axios.create({
-    baseURL: import.meta.env.VITE_API_URL || 'http://localhost:3001/api',
-    // Aqui você pode configurar timeouts globais, headers de autenticação, etc.
+    baseURL: `http://${ipAtual}:3001/api`, // Monta a URL dinamicamente
     timeout: 10000, 
 });
 

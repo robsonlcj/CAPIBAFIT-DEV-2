@@ -1,33 +1,40 @@
-import React, { useState, useEffect } from 'react';
-import MetaDiaria from '../../components/MetaDiaria/MetaDiaria';
-import { getDailyProgress } from '../../services/progressService'; // Importamos o serviço
+import React from 'react';
+import ChallengeList from '../../components/Challenges/ChallengeList.jsx';
 
-export default function Desafios() {
-  const [passos, setPassos] = useState(0);
-  const [meta, setMeta] = useState(5000);
-  
-  // ID do usuário hardcoded para teste (idealmente viria do login/contexto)
-  const userId = 1; 
+function Desafios() {
+    return (
+        <div style={styles.pageContainer}>
+            <div style={styles.header}>
+                <h1 style={styles.pageTitle}>Meus Desafios 🏆</h1>
+                <p style={styles.subtitle}>Complete missões para ganhar Capibas!</p>
+            </div>
 
-  useEffect(() => {
-    async function carregarDados() {
-        const dados = await getDailyProgress(userId);
-        setPassos(dados.steps_count);
-        setMeta(dados.daily_goal);
-    }
-
-    carregarDados();
-  }, []);
-
-  return (
-    <div style={{ padding: '20px', paddingBottom: '80px' }}>
-      <h2 style={{ marginBottom: '20px' }}>🏆 Desafios</h2>
-      
-      {/* Agora passamos os dados reais para o componente */}
-      <MetaDiaria passosAtuais={passos} meta={meta} />
-
-      <h3 style={{ marginTop: '30px', marginBottom: '10px' }}>Outros Desafios</h3>
-      <p>Lista de desafios aqui...</p>
-    </div>
-  );
+            {/* Aqui usamos o modo 'grid' para listar verticalmente */}
+            <ChallengeList viewMode="grid" />
+        </div>
+    );
 }
+
+const styles = {
+    pageContainer: {
+        minHeight: '100vh',
+        backgroundColor: '#FAFAFA',
+        paddingTop: '20px',
+    },
+    header: {
+        padding: '0 20px',
+        marginBottom: '10px'
+    },
+    pageTitle: {
+        margin: 0,
+        color: '#E65100',
+        fontSize: '1.8rem'
+    },
+    subtitle: {
+        margin: '5px 0 0 0',
+        color: '#666',
+        fontSize: '0.9rem'
+    }
+};
+
+export default Desafios;

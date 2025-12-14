@@ -1,17 +1,18 @@
 import { pool } from "../database/db_connection.js";
-// Se você tiver esse arquivo, pode manter. Se não, use o valor fixo abaixo.
+// Importa a função auxiliar que mantivemos no arquivo do RewardEngine
 import { calculateWelcomeBonus } from "../services/rewardEngine.js";
 
 export const WelcomeBonusService = {
 
   async execute(user_id) {
-    // 1. Iniciar Transação (Segurança para garantir que tudo grava ou nada grava)
-    await query('BEGIN');
+    // 1. Conexão Exclusiva (Necessário para Transações BEGIN/COMMIT funcionarem direito)
+    const client = await pool.connect();
 
     try {
-        // 2. Verificar se usuário existe + status da flag
-        // Ajuste: Certifique-se que a coluna 'welcome_challenge_completed' existe na tabela users
-        const userRes = await query(
+        await client.query('BEGIN');
+
+        // 2. Verificar usuário e flag
+        const userRes = await client.query(
             "SELECT welcome_challenge_completed FROM users WHERE user_id = $1",
             [user_id]
         );
@@ -20,49 +21,55 @@ export const WelcomeBonusService = {
             throw { status: 404, message: "Usuário não encontrado" };
         }
 
-        if (userRes.rows[0].welcome_challenge_completed === "S") {
+        if (userRes.rows[0].welcome_challenge_completed === 'S') { // 'S' ou 'N' conforme seu schema
             throw { status: 400, message: "O desafio de boas-vindas já foi concluído" };
         }
 
-        // 3. Regra do Bônus
-        const KM_CHALLENGE = 1;
-        // Se a função calculateWelcomeBonus der erro, use: const bonusCapibas = 500;
+        // 3. Calcular Bônus (Centralizado no RewardEngine)
+        // Isso garante que se mudarmos o valor do Km base, o bônus de boas-vindas atualiza junto
+        const KM_CHALLENGE = 1; 
         const bonusCapibas = calculateWelcomeBonus(KM_CHALLENGE); 
 
-        // 4. Registrar transação (Tabela transactions)
-        // Ajustado para bater com a tabela que você me mostrou (amount_capiba, bonus_origin, etc)
-        await query(
+        // 4. Registrar Transação (Ajustado para o Schema Atual)
+        // Usamos 'external_ref_id' para marcar a origem técnica, se quiser
+        await client.query(
             `INSERT INTO transactions
-            (user_id, amount_capiba, activity_type, activity_details, bonus_origin)
+            (user_id, amount_capiba, activity_type, activity_details, external_ref_id)
             VALUES ($1, $2, 'bonus', 'Desafio de boas-vindas (1 km)', 'welcome_challenge')`,
             [user_id, bonusCapibas]
         );
 
-        // 5. Atualizar saldo e marcar flag (Tabela users)
-        // CORREÇÃO CRÍTICA: Mudamos de 'balance' para 'capiba_balance'
-        // COALESCE: Se o saldo for null, considera como 0 antes de somar
-        await query(
+        // 5. Atualizar Saldo (Corrigido: 'balance' em vez de 'capiba_balance')
+        await client.query(
             `UPDATE users
-            SET capiba_balance = COALESCE(capiba_balance, 0) + $1,
+            SET balance = COALESCE(balance, 0) + $1,
                 welcome_challenge_completed = 'S'
             WHERE user_id = $2`,
             [bonusCapibas, user_id]
         );
 
-        // Se tudo deu certo, confirma as mudanças no banco
-        await query('COMMIT');
+        await client.query('COMMIT');
         
-        return { bonus: bonusCapibas };
+        return { 
+            success: true, 
+            message: "Desafio de boas-vindas concluído!",
+            bonus: bonusCapibas 
+        };
 
     } catch (error) {
-        // Se algo der errado, desfaz tudo
-        await query('ROLLBACK');
+        await client.query('ROLLBACK');
         
-        // Repassa o erro para o controller tratar
-        // Se o erro já tiver status (ex: 400 ou 404), mantém. Se não, vira 500.
-        const finalError = new Error(error.message || "Erro interno ao processar bônus");
-        finalError.status = error.status || 500;
-        throw finalError;
+        // Tratamento de erro padronizado
+        const status = error.status || 500;
+        const message = error.message || "Erro interno ao processar bônus de boas-vindas";
+        
+        // Lança um erro estruturado para o Controller pegar
+        const err = new Error(message);
+        err.status = status;
+        throw err;
+    } finally {
+        // Libera o cliente de volta para o pool (MUITO IMPORTANTE)
+        client.release();
     }
   }
 };

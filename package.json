@@ -8,7 +8,8 @@
     "start:backend": "node src/backend/server.js",
     "start:frontend": "npm --prefix src/frontend run dev",
     "start": "concurrently \"npm run start:backend\" \"npm run start:frontend\"",
-    "test": "jest"
+    "test": "jest",
+    "postinstall": "npm install --prefix src/frontend"
   },
   "keywords": [
     "nodejs",
@@ -21,7 +22,6 @@
     "cors": "^2.8.5",
     "dotenv": "^17.2.3",
     "express": "^4.18.2",
-    "i": "^0.3.7",
     "pg": "^8.16.3"
   },
   "devDependencies": {

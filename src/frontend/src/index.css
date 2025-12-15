@@ -1,0 +1,9 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Aqui você também pode colocar estilos globais se precisar no futuro */
+body {
+  font-family: 'Poppins', sans-serif;
+  background-color: #f9fafb; /* Cinza bem clarinho de fundo */
+}

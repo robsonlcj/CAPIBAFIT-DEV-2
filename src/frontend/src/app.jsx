@@ -14,9 +14,10 @@ import Extrato from './pages/Extrato/extrato';
 import Profile from './pages/Profile/Profile';
 import IntroScreen from './pages/Onboarding/IntroScreen';
 import WelcomeChallengeScreen from './pages/Onboarding/WelcomeChallengerScreen';
-
-// --- NOVO IMPORT (Task 4) ---
 import TouristSpotsScreen from './pages/TouristSpots/TouristSpotsScreen';
+
+// 👇 1. IMPORTAR A TELA DE ATIVIDADE (Faltava isso!)
+import ActivityScreen from './pages/Activity/ActivityScreen'; 
 
 // Menu
 import BottomMenu from "./components/BottomMenu/BottomMenu";
@@ -38,7 +39,7 @@ const PrivateRoute = ({ children }) => {
 function Layout() {
     const location = useLocation();
     // Rotas onde o menu NÃO deve aparecer
-    const rotasSemMenu = ['/', '/intro', '/welcome-challenge'];
+    const rotasSemMenu = ['/', '/intro', '/welcome-challenge', '/activity']; // Adicionei /activity para o menu não ficar por cima dos controles
     const mostrarMenu = !rotasSemMenu.includes(location.pathname);
 
     return (
@@ -55,9 +56,10 @@ function Layout() {
                 <Route path="/desafios" element={<PrivateRoute><Desafios /></PrivateRoute>} />
                 <Route path="/extrato" element={<PrivateRoute><Extrato /></PrivateRoute>} />
                 <Route path="/profile" element={<PrivateRoute><Profile /></PrivateRoute>} />
-
-                {/* --- NOVA ROTA DE PONTOS TURÍSTICOS --- */}
                 <Route path="/tourist-spots" element={<PrivateRoute><TouristSpotsScreen /></PrivateRoute>} />
+
+                {/* 👇 2. REGISTRAR A ROTA DE ATIVIDADE (Faltava isso!) */}
+                <Route path="/activity" element={<PrivateRoute><ActivityScreen /></PrivateRoute>} />
             </Routes>
 
             {/* O BottomMenu aparece automaticamente se não estiver na lista de exclusão */}

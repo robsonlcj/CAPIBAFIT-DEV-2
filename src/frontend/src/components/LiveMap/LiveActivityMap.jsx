@@ -1,8 +1,10 @@
 import React, { useEffect, useState, useRef } from 'react';
-import { MapContainer, TileLayer, Marker, Polyline, useMap } from 'react-leaflet';
+import { MapContainer, TileLayer, Marker, Polyline, useMap, Popup, useMapEvents } from 'react-leaflet';
 import L from 'leaflet';
+import { LocateFixed } from 'lucide-react'; // Ícone para o botão
 import 'leaflet/dist/leaflet.css';
 
+// Ícone Padrão (Azul - Você)
 import icon from 'leaflet/dist/images/marker-icon.png';
 import iconShadow from 'leaflet/dist/images/marker-shadow.png';
 
@@ -10,10 +12,22 @@ let DefaultIcon = L.icon({
     iconUrl: icon,
     shadowUrl: iconShadow,
     iconSize: [25, 41],
-    iconAnchor: [12, 41]
+    iconAnchor: [12, 41],
+    popupAnchor: [1, -34]
 });
 L.Marker.prototype.options.icon = DefaultIcon;
 
+// Ícone Vermelho (Destino)
+const RedIcon = new L.Icon({
+    iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-red.png',
+    shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.7/images/marker-shadow.png',
+    iconSize: [25, 41],
+    iconAnchor: [12, 41],
+    popupAnchor: [1, -34],
+    shadowSize: [41, 41]
+});
+
+// Funções Auxiliares
 const calculateDistance = (lat1, lon1, lat2, lon2) => {
     const R = 6371e3; 
     const φ1 = lat1 * Math.PI / 180;
@@ -25,22 +39,52 @@ const calculateDistance = (lat1, lon1, lat2, lon2) => {
     return R * c; 
 };
 
-const RecenterMap = ({ position }) => {
+// --- COMPONENTE CONTROLADOR DE EVENTOS ---
+// Detecta arrasto (para parar de seguir) e atualiza posição (se autoCenter ativo)
+const MapController = ({ currentPos, autoCenter, setAutoCenter }) => {
     const map = useMap();
+
+    // 1. Se autoCenter for true e tiver posição, move o mapa
     useEffect(() => {
-        if (position) map.setView(position, 18); // Zoom 18 para ver ruas de perto
-    }, [position, map]);
+        if (currentPos && autoCenter) {
+            map.setView(currentPos, map.getZoom(), { animate: true });
+        }
+    }, [currentPos, autoCenter, map]);
+
+    // 2. Detecta se o usuário arrastou o mapa manualmente
+    useMapEvents({
+        dragstart: () => {
+            // Usuário começou a mexer -> Para de seguir o GPS
+            setAutoCenter(false);
+        }
+    });
+
     return null;
 };
 
-const LiveActivityMap = ({ isActive, onDistanceUpdate }) => {
+// Componente para ajustar o zoom inicial (FitBounds) - Só roda na montagem
+const FitBounds = ({ userPos, targetPos }) => {
+    const map = useMap();
+    useEffect(() => {
+        if (userPos && targetPos) {
+            const bounds = L.latLngBounds([userPos, targetPos]);
+            map.fitBounds(bounds, { padding: [50, 50] });
+        }
+    }, []); 
+    return null;
+};
+
+// --- COMPONENTE PRINCIPAL ---
+const LiveActivityMap = ({ isActive, onDistanceUpdate, targetSpot, height, onLocationUpdate }) => {
     const [positions, setPositions] = useState([]);
     const [currentPos, setCurrentPos] = useState(null);
     const [totalDistance, setTotalDistance] = useState(0);
     const [gpsAccuracy, setGpsAccuracy] = useState(null);
     
-    // Posição padrão
-    const defaultPosition = [-8.0016, -35.0163]; 
+    // Controle de Foco do Mapa
+    const [autoCenter, setAutoCenter] = useState(true);
+
+    const defaultPosition = [-8.0631, -34.8711]; 
     const watchId = useRef(null);
 
     useEffect(() => {
@@ -55,22 +99,18 @@ const LiveActivityMap = ({ isActive, onDistanceUpdate }) => {
                     const { latitude, longitude, accuracy } = position.coords;
                     setGpsAccuracy(accuracy);
 
-                    // --- FILTRO DE PRECISÃO ---
-                    // Se a precisão for pior que 100 metros, IGNORE este ponto.
-                    // Isso elimina as leituras de 2000m (Torres de celular).
-                    if (accuracy > 100) {
-                        console.warn(`⚠️ GPS impreciso (${accuracy}m). Ignorando ponto.`);
-                        return; 
-                    }
+                    if (accuracy > 100) return; 
 
                     const newPoint = [latitude, longitude];
                     
                     setCurrentPos(prevPos => {
+                        // Envia para o Pai (ActivityScreen) saber onde estamos
+                        if (onLocationUpdate) onLocationUpdate(newPoint);
+
                         if (prevPos) {
                             const dist = calculateDistance(prevPos[0], prevPos[1], latitude, longitude);
                             
-                            // Filtro de Movimento: Só registra se andar > 2m E < 100m (teletransporte)
-                            if (dist > 2 && dist < 100) {
+                            if (dist > 2 && dist < 200) {
                                 setTotalDistance(oldTotal => {
                                     const newTotal = oldTotal + dist;
                                     onDistanceUpdate(newTotal);
@@ -85,11 +125,7 @@ const LiveActivityMap = ({ isActive, onDistanceUpdate }) => {
                     });
                 },
                 (error) => console.error("Erro GPS:", error),
-                { 
-                    enableHighAccuracy: true, // OBRIGA usar GPS Hardware
-                    timeout: 20000, 
-                    maximumAge: 0 // Não aceita cache velho
-                }
+                { enableHighAccuracy: true, timeout: 20000, maximumAge: 0 }
             );
         }
 
@@ -98,59 +134,100 @@ const LiveActivityMap = ({ isActive, onDistanceUpdate }) => {
         };
     }, [isActive, onDistanceUpdate]);
 
-    // Define cor da precisão
     const accuracyColor = gpsAccuracy && gpsAccuracy <= 20 ? 'green' : 'red';
+    const targetCoords = targetSpot ? [parseFloat(targetSpot.latitude), parseFloat(targetSpot.longitude)] : null;
 
     return (
-        <div style={styles.wrapper}>
+        <div style={{ ...styles.wrapper, height: height || '100%' }}>
+            
+            {/* PAINEL DE STATUS (Distância e GPS) */}
             <div style={styles.statsPanel}>
-                <span style={styles.statLabel}>Distância</span>
+                <span style={styles.statLabel}>Distância Percorrida</span>
                 <span style={styles.statValue}>{(totalDistance / 1000).toFixed(2)} <small>km</small></span>
                 
-                {/* Mostra a precisão para você debugar */}
                 <div style={{marginTop: 5, fontSize: '0.7rem', color: '#555', display: 'flex', alignItems: 'center', gap: 5}}>
                     <div style={{width: 8, height: 8, borderRadius: '50%', background: accuracyColor}}></div>
-                    Precisão: {gpsAccuracy ? `±${Math.round(gpsAccuracy)}m` : 'Buscando...'}
+                    GPS: {gpsAccuracy ? `±${Math.round(gpsAccuracy)}m` : 'Buscando...'}
                 </div>
             </div>
 
-            <MapContainer center={currentPos || defaultPosition} zoom={16} style={styles.mapStyle}>
+            {/* BOTÃO RECENTRALIZAR (Só aparece se o autoCenter estiver desligado) */}
+            {!autoCenter && (
+                <button 
+                    onClick={() => setAutoCenter(true)}
+                    style={styles.recenterButton}
+                >
+                    <LocateFixed size={24} />
+                    <span style={{fontSize: '0.8rem'}}>Focar em mim</span>
+                </button>
+            )}
+
+            <MapContainer center={currentPos || defaultPosition} zoom={16} style={styles.mapStyle} zoomControl={false}>
                 <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
+                
+                {/* Controlador de Eventos (Arrastar e Auto-Centro) */}
+                <MapController 
+                    currentPos={currentPos} 
+                    autoCenter={autoCenter} 
+                    setAutoCenter={setAutoCenter} 
+                />
+
                 {currentPos && (
                     <>
-                        <Marker position={currentPos} />
-                        <Polyline positions={positions} color="#2962FF" weight={6} />
-                        <RecenterMap position={currentPos} />
+                        <Marker position={currentPos}>
+                            <Popup>Você está aqui! 🏃</Popup>
+                        </Marker>
+                        <Polyline positions={positions} color="#2962FF" weight={5} />
+                    </>
+                )}
+
+                {targetCoords && (
+                    <>
+                        <Marker position={targetCoords} icon={RedIcon}>
+                            <Popup>
+                                <div style={{textAlign: 'center'}}>
+                                    <b>{targetSpot.name}</b><br/>
+                                    🎯 Destino da Missão!
+                                </div>
+                            </Popup>
+                        </Marker>
+                        {currentPos && (
+                            <Polyline 
+                                positions={[currentPos, targetCoords]} 
+                                color="red" 
+                                dashArray="10, 10" 
+                                weight={3} 
+                                opacity={0.6} 
+                            />
+                        )}
+                        {/* Zoom Inicial para mostrar ambos */}
+                        {currentPos && <FitBounds userPos={currentPos} targetPos={targetCoords} />}
                     </>
                 )}
             </MapContainer>
-
-            {(!currentPos || (gpsAccuracy && gpsAccuracy > 100)) && (
-                <div style={styles.gpsWarning}>
-                    {gpsAccuracy > 100 
-                        ? `⚠️ Sinal fraco (±${Math.round(gpsAccuracy)}m). Vá para céu aberto.` 
-                        : "📡 Calibrando satélites..."}
-                </div>
-            )}
         </div>
     );
 };
 
 const styles = {
-    wrapper: { position: 'relative', width: '100%', marginTop: '20px', borderRadius: '15px', overflow: 'hidden', border: '2px solid #ddd' },
-    mapStyle: { height: '450px', width: '100%', zIndex: 1 },
+    wrapper: { position: 'relative', width: '100%' }, 
+    mapStyle: { height: '100%', width: '100%', zIndex: 1 },
     statsPanel: {
-        position: 'absolute', top: '10px', right: '10px', zIndex: 999,
-        background: 'rgba(255,255,255,0.95)', padding: '10px 15px',
-        borderRadius: '10px', boxShadow: '0 2px 10px rgba(0,0,0,0.2)',
-        display: 'flex', flexDirection: 'column', alignItems: 'flex-end'
+        position: 'absolute', top: '80px', right: '10px', zIndex: 999,
+        background: 'rgba(255,255,255,0.9)', padding: '10px 15px',
+        borderRadius: '15px', boxShadow: '0 4px 15px rgba(0,0,0,0.1)',
+        display: 'flex', flexDirection: 'column', alignItems: 'flex-end',
+        backdropFilter: 'blur(5px)'
     },
-    statLabel: { fontSize: '0.8rem', color: '#666', textTransform: 'uppercase' },
-    statValue: { fontSize: '1.5rem', fontWeight: 'bold', color: '#E65100', lineHeight: 1 },
-    gpsWarning: {
-        position: 'absolute', bottom: '20px', left: '50%', transform: 'translateX(-50%)',
-        background: 'rgba(211, 47, 47, 0.9)', color: 'white', padding: '10px 20px',
-        borderRadius: '25px', textAlign: 'center', zIndex: 999, width: '90%', fontSize: '0.9rem', fontWeight: 'bold'
+    statLabel: { fontSize: '0.7rem', color: '#666', textTransform: 'uppercase', letterSpacing: '1px' },
+    statValue: { fontSize: '1.4rem', fontWeight: '800', color: '#E65100', lineHeight: 1 },
+    recenterButton: {
+        position: 'absolute', bottom: '130px', right: '10px', zIndex: 999,
+        background: 'white', color: '#333', border: 'none',
+        borderRadius: '50px', padding: '10px 15px',
+        boxShadow: '0 4px 10px rgba(0,0,0,0.2)',
+        display: 'flex', alignItems: 'center', gap: '5px',
+        cursor: 'pointer', fontWeight: 'bold'
     }
 };
 

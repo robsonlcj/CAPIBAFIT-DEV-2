@@ -20,18 +20,17 @@ function Home() {
     
     // Pegamos o usuário do contexto de Autenticação
     const { user } = useContext(AuthContext);
-    // Definimos o userId dinâmico (ou 1 como fallback de segurança)
     const userId = user?.user_id || 1;
 
     // Estados da Atividade e GPS
     const [isActivityActive, setIsActivityActive] = useState(false);
-    const [currentDistance, setCurrentDistance] = useState(0); // metros
+    const [currentDistance, setCurrentDistance] = useState(0); 
     const [updateTrigger, setUpdateTrigger] = useState(0);
 
     // Estados do Modal de Compartilhamento
     const [showShareModal, setShowShareModal] = useState(false);
     const [lastActivityStats, setLastActivityStats] = useState(null);
-    const cardRef = useRef(null); // Para o print
+    const cardRef = useRef(null); 
 
     // Recebe atualização do Mapa
     const handleDistanceUpdate = (meters) => {
@@ -44,8 +43,6 @@ function Home() {
             // --- INICIAR ---
             setIsActivityActive(true);
             setCurrentDistance(0);
-            
-            // Aviso discreto que iniciou
             toast.info("GPS Iniciado! Bom treino 🏃‍♂️"); 
 
         } else {
@@ -67,9 +64,7 @@ function Home() {
                         capibas: capibasGanhos
                     });
 
-                    // Toast de Sucesso no lugar do Alert
                     toast.success(`Atividade Salva! +${capibasGanhos} Capibas 🪙`);
-
                     setShowShareModal(true);
                     setUpdateTrigger(prev => prev + 1);
 
@@ -86,7 +81,7 @@ function Home() {
     return (
         <div className="home-container" style={{ paddingBottom: '120px', position: 'relative' }}> 
             
-            {/* --- MODAL DE COMPARTILHAMENTO (Sobrepõe tudo) --- */}
+            {/* --- MODAL DE COMPARTILHAMENTO --- */}
             {showShareModal && (
                 <div style={styles.modalOverlay}>
                     <div style={styles.modalContent}>
@@ -95,12 +90,10 @@ function Home() {
                             Compartilhe seu resultado:
                         </p>
                         
-                        {/* O Card Visual com dados REAIS */}
                         <div style={{ transform: 'scale(0.9)' }}> 
                             <ShareCard ref={cardRef} stats={lastActivityStats} />
                         </div>
                         
-                        {/* Botões */}
                         <div style={{marginTop: '20px', display: 'flex', flexDirection: 'column', gap: '12px', width: '100%'}}>
                             <ShareButton captureRef={cardRef} />
                             
@@ -117,30 +110,32 @@ function Home() {
 
             {/* Cabeçalho */}
             <div style={styles.headerTop}>
-            <div 
-                onClick={() => navigate('/profile')} 
-                style={{cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '5px'}}
-            >
-                <h3 style={{ margin: 0, color: '#444', fontSize: '1.2rem' }}>
-                    Olá, {user?.name || 'Atleta'}! 🌿
-                </h3>
-                <span style={{fontSize: '0.8rem', color: '#E65100', fontWeight: 'bold'}}>(Perfil)</span>
-            </div>
+                <div 
+                    onClick={() => navigate('/profile')} 
+                    style={{cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '5px'}}
+                >
+                    <h3 style={{ margin: 0, color: '#444', fontSize: '1.2rem' }}>
+                        Olá, {user?.name || 'Atleta'}! 🌿
+                    </h3>
+                    <span style={{fontSize: '0.8rem', color: '#E65100', fontWeight: 'bold'}}>(Perfil)</span>
+                </div>
 
-            <StreakDisplay key={updateTrigger} userId={userId} />
-        </div>
+                <StreakDisplay key={updateTrigger} userId={userId} />
+            </div>
 
             {/* Conteúdo Principal (Mapa ou Dashboard) */}
             {isActivityActive ? (
                 <div style={{ padding: '0 20px' }}>
-                    <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'end'}}>
+                    <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'end', marginBottom: '10px'}}>
                         <h2 style={{color: '#E65100', margin: 0}}>Atividade 🔥</h2>
                         <span style={{fontSize: '0.8rem', color: '#666'}}>GPS Ativo</span>
                     </div>
                     
+                    {/* 👇 MAPA COM ALTURA FIXA PARA NÃO QUEBRAR O LAYOUT */}
                     <LiveActivityMap 
                         isActive={isActivityActive} 
                         onDistanceUpdate={handleDistanceUpdate} 
+                        height="450px" 
                     />
                     
                     <p style={{textAlign: 'center', color: '#888', fontSize: '0.8rem', marginTop: '10px'}}>

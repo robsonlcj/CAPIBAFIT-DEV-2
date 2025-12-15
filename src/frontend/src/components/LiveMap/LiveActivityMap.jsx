@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { MapContainer, TileLayer, Marker, Polyline, useMap, Popup, useMapEvents } from 'react-leaflet';
 import L from 'leaflet';
-import { LocateFixed } from 'lucide-react'; // Ícone para o botão
+import { LocateFixed } from 'lucide-react'; 
 import 'leaflet/dist/leaflet.css';
 
 // Ícone Padrão (Azul - Você)
@@ -39,38 +39,24 @@ const calculateDistance = (lat1, lon1, lat2, lon2) => {
     return R * c; 
 };
 
-// --- COMPONENTE CONTROLADOR DE EVENTOS ---
-// Detecta arrasto (para parar de seguir) e atualiza posição (se autoCenter ativo)
+// --- CONTROLADOR DO MAPA (Cérebro da Navegação) ---
 const MapController = ({ currentPos, autoCenter, setAutoCenter }) => {
     const map = useMap();
 
-    // 1. Se autoCenter for true e tiver posição, move o mapa
+    // 1. Seguir o usuário suavemente (apenas se autoCenter estiver ligado)
     useEffect(() => {
         if (currentPos && autoCenter) {
-            map.setView(currentPos, map.getZoom(), { animate: true });
+            map.panTo(currentPos, { animate: true, duration: 0.5 });
         }
     }, [currentPos, autoCenter, map]);
 
-    // 2. Detecta se o usuário arrastou o mapa manualmente
+    // 2. Detectar se o usuário mexeu no mapa para desligar o "Seguir"
     useMapEvents({
         dragstart: () => {
-            // Usuário começou a mexer -> Para de seguir o GPS
             setAutoCenter(false);
         }
     });
 
-    return null;
-};
-
-// Componente para ajustar o zoom inicial (FitBounds) - Só roda na montagem
-const FitBounds = ({ userPos, targetPos }) => {
-    const map = useMap();
-    useEffect(() => {
-        if (userPos && targetPos) {
-            const bounds = L.latLngBounds([userPos, targetPos]);
-            map.fitBounds(bounds, { padding: [50, 50] });
-        }
-    }, []); 
     return null;
 };
 
@@ -80,13 +66,21 @@ const LiveActivityMap = ({ isActive, onDistanceUpdate, targetSpot, height, onLoc
     const [currentPos, setCurrentPos] = useState(null);
     const [totalDistance, setTotalDistance] = useState(0);
     const [gpsAccuracy, setGpsAccuracy] = useState(null);
-    
-    // Controle de Foco do Mapa
-    const [autoCenter, setAutoCenter] = useState(true);
+    const [autoCenter, setAutoCenter] = useState(true); // Começa seguindo
 
-    const defaultPosition = [-8.0631, -34.8711]; 
+    // Referência para o Mapa (para chamar o flyTo diretamente)
+    const mapRef = useRef(null);
     const watchId = useRef(null);
+    const defaultPosition = [-8.0631, -34.8711]; 
 
+    // Debug: Verificar se o destino chegou
+    useEffect(() => {
+        if (targetSpot) {
+            console.log("📍 LiveActivityMap recebeu destino:", targetSpot);
+        }
+    }, [targetSpot]);
+
+    // Lógica do GPS
     useEffect(() => {
         if (!isActive) {
             if (watchId.current) navigator.geolocation.clearWatch(watchId.current);
@@ -98,18 +92,16 @@ const LiveActivityMap = ({ isActive, onDistanceUpdate, targetSpot, height, onLoc
                 (position) => {
                     const { latitude, longitude, accuracy } = position.coords;
                     setGpsAccuracy(accuracy);
-
                     if (accuracy > 100) return; 
 
                     const newPoint = [latitude, longitude];
                     
                     setCurrentPos(prevPos => {
-                        // Envia para o Pai (ActivityScreen) saber onde estamos
+                        // Envia para a tela Pai (ActivityScreen)
                         if (onLocationUpdate) onLocationUpdate(newPoint);
 
                         if (prevPos) {
                             const dist = calculateDistance(prevPos[0], prevPos[1], latitude, longitude);
-                            
                             if (dist > 2 && dist < 200) {
                                 setTotalDistance(oldTotal => {
                                     const newTotal = oldTotal + dist;
@@ -128,80 +120,81 @@ const LiveActivityMap = ({ isActive, onDistanceUpdate, targetSpot, height, onLoc
                 { enableHighAccuracy: true, timeout: 20000, maximumAge: 0 }
             );
         }
-
         return () => {
             if (watchId.current) navigator.geolocation.clearWatch(watchId.current);
         };
-    }, [isActive, onDistanceUpdate]);
+    }, [isActive, onDistanceUpdate, onLocationUpdate]);
 
     const accuracyColor = gpsAccuracy && gpsAccuracy <= 20 ? 'green' : 'red';
-    const targetCoords = targetSpot ? [parseFloat(targetSpot.latitude), parseFloat(targetSpot.longitude)] : null;
+    
+    // Tratamento seguro das coordenadas do destino
+    const targetCoords = targetSpot && targetSpot.latitude && targetSpot.longitude
+        ? [parseFloat(targetSpot.latitude), parseFloat(targetSpot.longitude)] 
+        : null;
+
+    // Ação do Botão "Focar em Mim"
+    const handleRecenter = () => {
+        if (currentPos && mapRef.current) {
+            setAutoCenter(true);
+            mapRef.current.flyTo(currentPos, 16, { duration: 1.5 }); // Voa para o usuário
+        }
+    };
 
     return (
         <div style={{ ...styles.wrapper, height: height || '100%' }}>
             
-            {/* PAINEL DE STATUS (Distância e GPS) */}
+            {/* Painel de Status */}
             <div style={styles.statsPanel}>
-                <span style={styles.statLabel}>Distância Percorrida</span>
+                <span style={styles.statLabel}>Distância</span>
                 <span style={styles.statValue}>{(totalDistance / 1000).toFixed(2)} <small>km</small></span>
-                
                 <div style={{marginTop: 5, fontSize: '0.7rem', color: '#555', display: 'flex', alignItems: 'center', gap: 5}}>
                     <div style={{width: 8, height: 8, borderRadius: '50%', background: accuracyColor}}></div>
                     GPS: {gpsAccuracy ? `±${Math.round(gpsAccuracy)}m` : 'Buscando...'}
                 </div>
             </div>
 
-            {/* BOTÃO RECENTRALIZAR (Só aparece se o autoCenter estiver desligado) */}
-            {!autoCenter && (
-                <button 
-                    onClick={() => setAutoCenter(true)}
-                    style={styles.recenterButton}
-                >
-                    <LocateFixed size={24} />
-                    <span style={{fontSize: '0.8rem'}}>Focar em mim</span>
+            {/* Botão Recentralizar (Aparece se autoCenter for false E tivermos GPS) */}
+            {!autoCenter && currentPos && (
+                <button onClick={handleRecenter} style={styles.recenterButton}>
+                    <LocateFixed size={20} /> <span style={{fontSize: '0.8rem'}}>Focar</span>
                 </button>
             )}
 
-            <MapContainer center={currentPos || defaultPosition} zoom={16} style={styles.mapStyle} zoomControl={false}>
+            <MapContainer 
+                center={currentPos || defaultPosition} 
+                zoom={16} 
+                style={styles.mapStyle} 
+                zoomControl={false}
+                ref={mapRef} // Referência para controlar o mapa
+            >
                 <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
                 
-                {/* Controlador de Eventos (Arrastar e Auto-Centro) */}
-                <MapController 
-                    currentPos={currentPos} 
-                    autoCenter={autoCenter} 
-                    setAutoCenter={setAutoCenter} 
-                />
+                <MapController currentPos={currentPos} autoCenter={autoCenter} setAutoCenter={setAutoCenter} />
 
+                {/* Marcador do Usuário */}
                 {currentPos && (
                     <>
-                        <Marker position={currentPos}>
-                            <Popup>Você está aqui! 🏃</Popup>
-                        </Marker>
+                        <Marker position={currentPos}><Popup>Você!</Popup></Marker>
                         <Polyline positions={positions} color="#2962FF" weight={5} />
                     </>
                 )}
 
+                {/* Marcador do Destino (Pino Vermelho) */}
                 {targetCoords && (
                     <>
                         <Marker position={targetCoords} icon={RedIcon}>
-                            <Popup>
-                                <div style={{textAlign: 'center'}}>
-                                    <b>{targetSpot.name}</b><br/>
-                                    🎯 Destino da Missão!
-                                </div>
-                            </Popup>
+                            <Popup>🎯 {targetSpot.name}</Popup>
                         </Marker>
+                        
+                        {/* Linha Guia */}
                         {currentPos && (
                             <Polyline 
                                 positions={[currentPos, targetCoords]} 
                                 color="red" 
                                 dashArray="10, 10" 
-                                weight={3} 
                                 opacity={0.6} 
                             />
                         )}
-                        {/* Zoom Inicial para mostrar ambos */}
-                        {currentPos && <FitBounds userPos={currentPos} targetPos={targetCoords} />}
                     </>
                 )}
             </MapContainer>
@@ -216,18 +209,15 @@ const styles = {
         position: 'absolute', top: '80px', right: '10px', zIndex: 999,
         background: 'rgba(255,255,255,0.9)', padding: '10px 15px',
         borderRadius: '15px', boxShadow: '0 4px 15px rgba(0,0,0,0.1)',
-        display: 'flex', flexDirection: 'column', alignItems: 'flex-end',
-        backdropFilter: 'blur(5px)'
+        display: 'flex', flexDirection: 'column', alignItems: 'flex-end', backdropFilter: 'blur(5px)'
     },
-    statLabel: { fontSize: '0.7rem', color: '#666', textTransform: 'uppercase', letterSpacing: '1px' },
+    statLabel: { fontSize: '0.7rem', color: '#666', textTransform: 'uppercase' },
     statValue: { fontSize: '1.4rem', fontWeight: '800', color: '#E65100', lineHeight: 1 },
     recenterButton: {
         position: 'absolute', bottom: '130px', right: '10px', zIndex: 999,
-        background: 'white', color: '#333', border: 'none',
-        borderRadius: '50px', padding: '10px 15px',
-        boxShadow: '0 4px 10px rgba(0,0,0,0.2)',
-        display: 'flex', alignItems: 'center', gap: '5px',
-        cursor: 'pointer', fontWeight: 'bold'
+        background: 'white', color: '#333', border: 'none', borderRadius: '50px',
+        padding: '10px 15px', boxShadow: '0 4px 10px rgba(0,0,0,0.2)',
+        display: 'flex', alignItems: 'center', gap: '5px', cursor: 'pointer', fontWeight: 'bold'
     }
 };
 

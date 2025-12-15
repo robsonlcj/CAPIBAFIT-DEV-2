@@ -1,65 +1,48 @@
-// DEBUG: conferir variáveis carregadas
-console.log("DEBUG ENV:", {
-  DB_USER: process.env.DB_USER,
-  DB_PASSWORD: process.env.DB_PASSWORD,
-  DB_HOST: process.env.DB_HOST,
-  DB_NAME: process.env.DB_NAME,
-  DB_PORT: process.env.DB_PORT
+import dotenv from 'dotenv';
+
+dotenv.config({
+  path: './src/backend/.env'
 });
 
-console.log("TIPOS:", {
-  DB_USER: typeof process.env.DB_USER,
-  DB_PASSWORD: typeof process.env.DB_PASSWORD,
-  RAW_PASSWORD: process.env.DB_PASSWORD,
-});
 
-// 1. IMPORTS DO SERVIDOR (depois do dotenv)
+console.log('DB_USER:', process.env.DB_USER);
+console.log('DB_HOST:', process.env.DB_HOST);
+console.log('DB_NAME:', process.env.DB_NAME);
+console.log('DB_PORT:', process.env.DB_PORT);
 
 import express from 'express';
 import cors from 'cors';
-import apiRouter from './api/routes.js';
-import { query } from './database/db_connection.js';
-
-// 2. FUNÇÃO DE TESTE DE CONEXÃO COM O BANCO
-
-async function testDatabaseConnection() {
-  try {
-    await query('SELECT 1');
-    console.log('💾 Conectado ao PostgreSQL com sucesso.');
-  } catch (err) {
-    console.error('❌ ERRO ao conectar ao PostgreSQL:', err);
-  }
-}
-
-// 3. CONFIGURAÇÃO DO SERVIDOR EXPRESS
+import apiRouter from './api/routes.js'; // Importante ter o .js no final
+import { pool } from './database/db_connection.js'; 
+import iniciarCronJobs from './jobs/dailyReset.js'; // Importante ter o .js no final
 
 const app = express();
-const PORT = 3001;
-const FRONTEND_URL = 'http://localhost:5173';
+const PORT = 3001; 
 
-// CORS
-app.use(cors({
-    origin: FRONTEND_URL,
-    methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization'],
-    credentials: true
-}));
-
-// JSON
+// Configurações
+app.use(cors({ origin: '*' })); 
 app.use(express.json({ limit: '10mb' }));
-app.use(express.json());
 
-// 4. REGISTRO DAS ROTAS
-
+// Rotas
 app.use('/api', apiRouter);
 
-app.get('/health', (req, res) => res.json({ ok: true }));
-
-// 5. INICIALIZAÇÃO DO SERVIDOR
-
+// Inicialização
 app.listen(PORT, async () => {
-    console.log(`🚀 Servidor Express rodando na porta ${PORT}`);
-    console.log(`Aguardando requisições de ${FRONTEND_URL}`);
+    console.log(`🚀 Backend rodando na porta ${PORT}`);
+    
+    // Teste de Banco
+    try {
+        await pool.query('SELECT 1');
+        console.log('✅ Banco conectado com sucesso!');
+    } catch (err) {
+        console.error('❌ CRÍTICO: Não foi possível conectar ao banco:', err.message);
+    }
 
-    await testDatabaseConnection();
+    // Iniciar Cron Jobs (Verificação diária de Streaks perdidos)
+    if (typeof iniciarCronJobs === 'function') {
+        iniciarCronJobs();
+        console.log('⏰ Cron Jobs iniciados.');
+    } else {
+        console.warn('⚠️ Atenção: iniciarCronJobs não é uma função válida.');
+    }
 });

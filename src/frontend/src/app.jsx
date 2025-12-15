@@ -1,116 +1,80 @@
-import React, { useEffect, useState } from 'react';
-import { BrowserRouter, Routes, Route, useNavigate, useLocation } from 'react-router-dom';
-import axios from 'axios';
+import React, { useContext } from 'react';
+import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom';
+import { ToastContainer } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
+
+// Contexto
+import { AuthProvider, AuthContext } from './context/AuthContext';
 
 // Páginas
-import Home from './pages/Home/Home'; 
+import Login from './pages/Login/Login';
+import Home from './pages/Home/Home';
 import Desafios from './pages/Desafios/desafios'; 
-import Extrato from './pages/Extrato/extrato'; 
-import BottomMenu from './components/BottomMenu/BottomMenu.jsx';
-
-// NOVOS IMPORTS SEPARADOS
+import Extrato from './pages/Extrato/extrato';
+import Profile from './pages/Profile/Profile';
 import IntroScreen from './pages/Onboarding/IntroScreen';
 import WelcomeChallengeScreen from './pages/Onboarding/WelcomeChallengerScreen';
+import TouristSpotsScreen from './pages/TouristSpots/TouristSpotsScreen';
 
-// 1. PORTEIRO (Decide se vai para Intro ou Home)
-const AuthCheck = () => {
-  const navigate = useNavigate();
+// 👇 1. IMPORTAR A TELA DE ATIVIDADE (Faltava isso!)
+import ActivityScreen from './pages/Activity/ActivityScreen'; 
 
-  useEffect(() => {
-    const verificarPrimeiroAcesso = async () => {
-      try {
-        const response = await axios.get('http://localhost:3001/api/users/me?userId=1');
-        const user = response.data;
+// Menu
+import BottomMenu from "./components/BottomMenu/BottomMenu";
 
-        // REGRA 1: É o primeiro login da vida?
-        // Se first_login for true (ou 1), joga para os slides.
-        if (user.first_login) {
-          console.log("Usuário novo: Indo para Intro.");
-          navigate('/intro', { replace: true });
-        } else {
-          // Se não é novo, vai para Home. 
-          // (O DesafiosGuard cuidará do desafio pendente depois)
-          console.log("Usuário recorrente: Indo para Home.");
-          navigate('/home', { replace: true });
-        }
-
-      } catch (error) {
-        console.error("Erro ao verificar user:", error);
-        // Fallback: Na dúvida, manda pra Home pra não travar
-        navigate('/home', { replace: true });
-      }
-    };
-
-    verificarPrimeiroAcesso();
-  }, [navigate]);
-
-  return <div style={{display:'flex', justifyContent:'center', marginTop:'50vh'}}>Carregando...</div>;
+// Componente para Proteger Rotas (Só entra se estiver logado)
+const PrivateRoute = ({ children }) => {
+    const { user, loading } = useContext(AuthContext);
+    
+    if (loading) return <div>Carregando...</div>;
+    
+    if (!user) {
+        return <Navigate to="/" />;
+    }
+    
+    return children;
 };
 
-// 2. GUARDA (Se clicar em Desafios sem ter o welcome, vai pro Card)
-const DesafiosGuard = ({ children }) => {
-  const navigate = useNavigate();
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    const verificar = async () => {
-      try {
-        const response = await axios.get('http://localhost:3001/api/users/me?userId=1');
-        const dbCompletou = response.data && response.data.welcome_challenge_completed === 'S';
-
-        if (!dbCompletou) {
-          // MUDANÇA: Manda direto para a rota do Card (sem slides)
-          console.log("Pendente. Redirecionando para tela de Desafio Inicial.");
-          navigate('/welcome-challenge', { replace: true });
-        } else {
-          setLoading(false);
-        }
-      } catch (error) {
-        setLoading(false);
-      }
-    };
-    verificar();
-  }, [navigate]);
-
-  if (loading) return <div>Verificando...</div>;
-  return children;
-};
-
+// Layout com Menu Condicional
 function Layout() {
-  const location = useLocation();
-  // Só mostra menu nestas rotas
-  const rotasComMenu = ['/home', '/desafios', '/extrato'];
-  const mostrarMenu = rotasComMenu.includes(location.pathname);
+    const location = useLocation();
+    // Rotas onde o menu NÃO deve aparecer
+    const rotasSemMenu = ['/', '/intro', '/welcome-challenge', '/activity']; // Adicionei /activity para o menu não ficar por cima dos controles
+    const mostrarMenu = !rotasSemMenu.includes(location.pathname);
 
-  return (
-    <>
-      <div className="app-content" style={{ paddingBottom: mostrarMenu ? '80px' : '0' }}>
-        <Routes>
-          <Route path="/" element={<AuthCheck />} />
-          <Route path="/home" element={<Home />} />
-          
-          {/* ROTAS DE ONBOARDING SEPARADAS */}
-          <Route path="/intro" element={<IntroScreen />} />
-          <Route path="/welcome-challenge" element={<WelcomeChallengeScreen />} />
+    return (
+        // Padding bottom adicionado para o conteúdo não ficar escondido atrás do menu
+        <div className="app-content" style={{ paddingBottom: mostrarMenu ? '80px' : '0' }}>
+            <Routes>
+                {/* Rota Pública */}
+                <Route path="/" element={<Login />} />
 
-          <Route path="/desafios" element={
-            <DesafiosGuard>
-              <Desafios />
-            </DesafiosGuard>
-          } />
+                {/* Rotas Privadas */}
+                <Route path="/home" element={<PrivateRoute><Home /></PrivateRoute>} />
+                <Route path="/intro" element={<PrivateRoute><IntroScreen /></PrivateRoute>} />
+                <Route path="/welcome-challenge" element={<PrivateRoute><WelcomeChallengeScreen /></PrivateRoute>} />
+                <Route path="/desafios" element={<PrivateRoute><Desafios /></PrivateRoute>} />
+                <Route path="/extrato" element={<PrivateRoute><Extrato /></PrivateRoute>} />
+                <Route path="/profile" element={<PrivateRoute><Profile /></PrivateRoute>} />
+                <Route path="/tourist-spots" element={<PrivateRoute><TouristSpotsScreen /></PrivateRoute>} />
 
-          <Route path="/extrato" element={<Extrato />} />
-        </Routes>
-      </div>
-      {mostrarMenu && <BottomMenu />}
-    </>
-  );
+                {/* 👇 2. REGISTRAR A ROTA DE ATIVIDADE (Faltava isso!) */}
+                <Route path="/activity" element={<PrivateRoute><ActivityScreen /></PrivateRoute>} />
+            </Routes>
+
+            {/* O BottomMenu aparece automaticamente se não estiver na lista de exclusão */}
+            {mostrarMenu && <BottomMenu />}
+        </div>
+    );
 }
 
 export default function App() {
-  return (
-    <BrowserRouter>
-      <Layout />
-    </BrowserRouter>
-  );
+    return (
+        <AuthProvider>
+            <BrowserRouter>
+                <Layout />
+                <ToastContainer position="top-center" theme="colored" />
+            </BrowserRouter>
+        </AuthProvider>
+    );
 }

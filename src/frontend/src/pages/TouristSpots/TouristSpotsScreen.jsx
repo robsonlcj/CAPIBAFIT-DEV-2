@@ -18,15 +18,28 @@ export default function TouristSpotsScreen() {
 
     // 1. Carregar Pontos do Backend e Localização
     useEffect(() => {
-        // Busca pontos da API
+        console.log("🔄 Iniciando busca de pontos...");
+
         fetch('http://localhost:3001/api/tourist-spots')
-            .then(res => res.json())
+            .then(res => {
+                console.log("📡 Resposta recebida. Status:", res.status);
+                if (!res.ok) throw new Error('Erro na rede ou servidor');
+                return res.json();
+            })
             .then(data => {
-                setSpots(data);
+                console.log("📦 DADOS CHEGARAM:", data); // <--- OLHE AQUI NO CONSOLE
+                
+                // Verificação de segurança: É um array?
+                if (Array.isArray(data)) {
+                    console.log(`✅ É um array com ${data.length} itens.`);
+                    setSpots(data);
+                } else {
+                    console.error("⚠️ ERRO: O backend não retornou uma lista!", data);
+                }
                 setLoading(false);
             })
             .catch(err => {
-                console.error("Erro ao carregar pontos:", err);
+                console.error("❌ Erro fatal no fetch:", err);
                 setLoading(false);
             });
 

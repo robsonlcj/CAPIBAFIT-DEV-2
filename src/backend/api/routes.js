@@ -67,6 +67,21 @@ router.post('/users/:userId/complete-onboarding', async (req, res) => {
 });
 
 // ==================================================================
+// 🗺️ PONTOS TURÍSTICOS (ADICIONADO AGORA!)
+// ==================================================================
+router.get('/tourist-spots', async (req, res) => {
+    console.log("📥 [API] Recebi pedido de /tourist-spots"); // Log para debug
+    try {
+        const result = await pool.query('SELECT * FROM tourist_spots');
+        console.log(`✅ [API] Encontrados ${result.rows.length} pontos.`);
+        res.json(result.rows);
+    } catch (error) {
+        console.error("❌ [API] Erro ao buscar pontos:", error);
+        res.status(500).json({ error: "Erro interno" });
+    }
+});
+
+// ==================================================================
 // 🏃 ATIVIDADES E GAMIFICAÇÃO
 // ==================================================================
 

@@ -1,5 +1,5 @@
 import express from 'express';
-// Ajuste de caminho: agora services e database estão irmãos de 'api', então usamos apenas '../'
+// Ajuste de caminho: agora services e database estão irmãos dee 'api', então usamos apenas '../'
 import { pool } from '../database/db_connection.js'; 
 import StreakService from '../services/StreakService.js';
 import ActivityController from '../controllers/ActivityController.js'; 

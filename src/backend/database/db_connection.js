@@ -1,7 +1,7 @@
 import pg from 'pg';
 import dotenv from 'dotenv';
 
-// Carrega .env apenas se estivermos rodando localmente
+// Só carrega o arquivo .env se NÃO estivermos no Render
 if (process.env.NODE_ENV !== 'production') {
     dotenv.config({ path: './src/backend/.env' });
 }
@@ -15,23 +15,22 @@ console.log('🌍 Ambiente:', isProduction ? 'PRODUÇÃO (Render)' : 'DESENVOLVI
 let poolConfig;
 
 if (isProduction) {
-    // --- CONFIGURAÇÃO DE PRODUÇÃO (Render + Supabase) ---
-    // Usa a string única de conexão e obriga o uso de SSL
+    // --- CONFIGURAÇÃO DO RENDER (Produção) ---
+    // Usa a string única do Supabase e ativa segurança SSL
     if (!process.env.DATABASE_URL) {
-        console.error("❌ ERRO CRÍTICO: DATABASE_URL não foi definida nas variáveis de ambiente do Render!");
+        console.error("❌ ERRO CRÍTICO: A variável DATABASE_URL não foi configurada no Render!");
     }
 
     poolConfig = {
         connectionString: process.env.DATABASE_URL,
         ssl: {
-            rejectUnauthorized: false // Obrigatório para conectar no Supabase/Neon via Render
+            rejectUnauthorized: false // Obrigatório para conectar no Supabase
         }
     };
 } else {
     // --- CONFIGURAÇÃO LOCAL (Seu PC) ---
-    // Continua funcionando como você configurou antes
-    console.log('Tentando conectar local com user:', process.env.DB_USER || 'postgres');
-    
+    // Continua usando suas variáveis antigas
+    console.log('Tentando conectar local...');
     poolConfig = {
         user: process.env.DB_USER || 'postgres',
         host: process.env.DB_HOST || 'localhost',
@@ -43,19 +42,14 @@ if (isProduction) {
 
 const pool = new Pool(poolConfig);
 
-export { pool };
-
-// Teste de conexão
+// Teste de conexão ao iniciar
 pool.connect()
     .then(client => {
         console.log('✅ Banco de dados conectado com sucesso!');
         client.release();
     })
     .catch(err => {
-        console.error('❌ Erro de Conexão:', err.message);
-        if (isProduction) {
-            console.error('Dica: Verifique se a DATABASE_URL está correta no painel do Render.');
-        } else {
-            console.error('Dica: Verifique se o Postgres local está rodando e as senhas batem.');
-        }
+        console.error('❌ Erro Fatal ao conectar no banco:', err.message);
     });
+
+export { pool };

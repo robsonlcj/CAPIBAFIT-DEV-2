@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { MapPin, Navigation, Info, CheckCircle, ArrowRight } from 'lucide-react'; // Adicionei ArrowRight
 import BottomMenu from "../../components/BottomMenu/BottomMenu";
+import api from '../../services/api';
 
 // --- IMPORT DAS IMAGENS LOCAIS (Nomes exatos conforme seu print) ---
 import marcoZeroImg from '../../assets/tourist/marco-zero-img.jpg';
@@ -26,21 +27,12 @@ export default function TouristSpotsScreen() {
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
-        fetch('http://localhost:3001/api/tourist-spots')
-            .then(res => res.json())
-            .then(data => {
-                if (Array.isArray(data)) setSpots(data);
-                setLoading(false);
-            })
-            .catch(err => setLoading(false));
-
-        if (navigator.geolocation) {
-            navigator.geolocation.getCurrentPosition(
-                (pos) => setUserCoords({ lat: pos.coords.latitude, lon: pos.coords.longitude }),
-                (err) => console.error(err)
-            );
-        }
-    }, []);
+    api.get('/tourist-spots') 
+        .then(response => {
+            setPontosTuristicos(response.data);
+        })
+        .catch(error => console.error(error));
+}, []);
 
     const getDistance = (lat1, lon1) => {
         if (!userCoords) return "-- km";

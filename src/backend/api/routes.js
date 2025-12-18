@@ -20,7 +20,7 @@ router.post('/auth/register', async (req, res) => {
         const result = await pool.query(
             `INSERT INTO users (name, email, password, balance, streak_count, total_km, daily_goal, first_login, welcome_challenge_completed) 
              VALUES ($1, $2, $3, 0, 0, 0, 5000, true, 'N') 
-             RETURNING user_id, name, email, first_login`,
+             RETURNING user_id, name, email, first_login, balance`, 
             [name, email, password]
         );
         res.json(result.rows[0]);

@@ -1,9 +1,70 @@
-import React from 'react';
+import React, { useState } from 'react';
 
-const ChallengeCard = ({ title, reward, current, target, type }) => {
-  // Calcula a porcentagem para a barra de progresso
+// Recebendo id e claimed nas props
+const ChallengeCard = ({ id, title, reward, current, target, type, claimed }) => {
+  const [loading, setLoading] = useState(false);
+
+  // Lógica da Barra de Progresso
   const progressPercent = Math.min((current / target) * 100, 100);
   const isCompleted = current >= target;
+  
+  // Regra: Só pode resgatar se completou (isCompleted) E ainda não resgatou (!claimed)
+  const canClaim = isCompleted && !claimed;
+
+  const handleResgatar = async () => {
+    // ⚠️ CORREÇÃO IMPORTANTE: Usando 'capiba_user' igual ao resto do app
+    const storedUser = localStorage.getItem('capiba_user');
+    
+    if (!storedUser) {
+        return alert("Erro: Usuário não identificado. Faça login novamente.");
+    }
+    
+    const user = JSON.parse(storedUser);
+    setLoading(true);
+
+    try {
+      // Chama o backend (Rota nova que criamos)
+      // Ajuste a URL se seu backend não estiver na porta 3001
+      const response = await fetch('http://localhost:3001/api/challenges/claim', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ 
+            userId: user.user_id, 
+            challengeId: id 
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Erro ao resgatar');
+      }
+
+      // Sucesso!
+      alert(`🎉 Parabéns! +${data.reward} Capibas na conta!`);
+      window.location.reload(); // Recarrega para atualizar saldo e bloquear o botão
+
+    } catch (error) {
+      console.error("Erro:", error);
+      alert(error.message || "Erro de conexão");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Define a aparência do botão
+  let buttonStyle = styles.btnActive; // Padrão cinza
+  let buttonText = "Em andamento";
+  let isDisabled = true;
+
+  if (claimed) {
+    buttonStyle = styles.btnClaimed; // Verde claro (Travado)
+    buttonText = "Resgatado ✅";
+  } else if (canClaim) {
+    buttonStyle = styles.btnCompleted; // Verde forte (Clicável)
+    buttonText = loading ? "Processando..." : "Resgatar 💰";
+    isDisabled = false;
+  }
 
   return (
     <div style={styles.card}>
@@ -20,7 +81,7 @@ const ChallengeCard = ({ title, reward, current, target, type }) => {
             style={{
               ...styles.progressBarFill, 
               width: `${progressPercent}%`,
-              backgroundColor: isCompleted ? '#4CAF50' : '#FF9800' // Verde se completou, Laranja se não
+              backgroundColor: isCompleted ? '#4CAF50' : '#FF9800'
             }} 
           />
         </div>
@@ -29,8 +90,12 @@ const ChallengeCard = ({ title, reward, current, target, type }) => {
         </p>
       </div>
 
-      <button style={isCompleted ? styles.btnCompleted : styles.btnActive}>
-        {isCompleted ? 'Resgatar' : 'Em andamento'}
+      <button 
+        style={buttonStyle} 
+        onClick={!isDisabled ? handleResgatar : undefined}
+        disabled={isDisabled || loading}
+      >
+        {buttonText}
       </button>
     </div>
   );
@@ -38,7 +103,7 @@ const ChallengeCard = ({ title, reward, current, target, type }) => {
 
 const styles = {
   card: {
-    minWidth: '160px', // Tamanho fixo para o carrossel
+    minWidth: '160px',
     backgroundColor: '#fff',
     borderRadius: '16px',
     padding: '16px',
@@ -97,16 +162,18 @@ const styles = {
     color: '#999',
     textAlign: 'right'
   },
+  // Botão Cinza (Incompleto)
   btnActive: {
     border: 'none',
     background: '#f5f5f5',
-    color: '#888',
+    color: '#aaa',
     padding: '8px',
     borderRadius: '8px',
     fontSize: '0.8rem',
-    cursor: 'default',
+    cursor: 'not-allowed',
     fontWeight: 'bold'
   },
+  // Botão Verde Forte (Pronto para resgatar)
   btnCompleted: {
     border: 'none',
     background: '#4CAF50',
@@ -116,7 +183,19 @@ const styles = {
     fontSize: '0.8rem',
     cursor: 'pointer',
     fontWeight: 'bold',
-    boxShadow: '0 2px 5px rgba(76, 175, 80, 0.3)'
+    boxShadow: '0 2px 5px rgba(76, 175, 80, 0.3)',
+    transition: 'transform 0.1s'
+  },
+  // Botão Verde Claro (Já Resgatado)
+  btnClaimed: {
+    border: '1px solid #E8F5E9',
+    background: '#E8F5E9',
+    color: '#2E7D32',
+    padding: '8px',
+    borderRadius: '8px',
+    fontSize: '0.8rem',
+    cursor: 'default',
+    fontWeight: 'bold'
   }
 };
 

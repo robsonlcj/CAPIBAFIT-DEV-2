@@ -1,16 +1,15 @@
 import React, { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom'; // <--- Importamos o useNavigate
+import { useNavigate } from 'react-router-dom';
 import ChallengeCard from './ChallengeCard';
-import api from '../../services/api';
+import api from '../../services/api'; // Ajuste o caminho se necessário
 
 const ChallengeList = ({ viewMode = 'carousel' }) => {
   const [desafios, setDesafios] = useState([]);
   const [loading, setLoading] = useState(true);
   
-  const navigate = useNavigate(); // <--- Instanciamos o hook
+  const navigate = useNavigate();
   
-  // Pegamos o ID do usuário do localStorage ou usamos 1 fixo
-  // (Idealmente viria por prop, mas para manter simples mantemos assim)
+  // Pega o usuário com a chave correta
   const user = JSON.parse(localStorage.getItem('capiba_user'));
   const userId = user?.user_id || 1;
 
@@ -29,7 +28,7 @@ const ChallengeList = ({ viewMode = 'carousel' }) => {
     fetchChallenges();
   }, [userId]);
 
-  if (loading) return <div style={{padding: '20px', color: '#888'}}>Carregando...</div>;
+  if (loading) return <div style={{padding: '20px', color: '#888'}}>Carregando desafios...</div>;
 
   const containerStyle = viewMode === 'grid' ? styles.gridContainer : styles.scrollContainer;
 
@@ -39,16 +38,12 @@ const ChallengeList = ({ viewMode = 'carousel' }) => {
       {viewMode === 'carousel' && (
         <div style={styles.header}>
           <h3 style={styles.title}>Desafios Ativos 🎯</h3>
-          
-          {/* --- AQUI ESTÁ A MUDANÇA --- */}
           <span 
             style={styles.seeAll} 
-            onClick={() => navigate('/desafios')} // Redireciona ao clicar
+            onClick={() => navigate('/desafios')}
           >
             Ver todos
           </span>
-          {/* --------------------------- */}
-        
         </div>
       )}
       
@@ -57,6 +52,10 @@ const ChallengeList = ({ viewMode = 'carousel' }) => {
           desafios.map(desafio => (
             <ChallengeCard 
               key={desafio.id}
+              // 👇 DADOS CRITICOS PARA O RESGATE 👇
+              id={desafio.id}           
+              claimed={desafio.claimed} 
+              // 👆 ---------------------------- 👆
               title={desafio.title}
               reward={desafio.reward}
               current={desafio.current}
@@ -89,15 +88,12 @@ const styles = {
     padding: '0 20px' 
   },
   title: { margin: 0, fontSize: '1.1rem', color: '#444' },
-  
-  // Estilo atualizado com cursor pointer
   seeAll: { 
     fontSize: '0.9rem', 
     color: '#E65100', 
-    cursor: 'pointer', // Mãozinha ao passar o mouse
+    cursor: 'pointer',
     fontWeight: 'bold' 
   },
-  
   scrollContainer: {
     display: 'flex', 
     gap: '15px', 
@@ -107,7 +103,6 @@ const styles = {
     scrollbarWidth: 'none', 
     msOverflowStyle: 'none',
   },
-
   gridContainer: {
     display: 'flex',
     flexDirection: 'column',

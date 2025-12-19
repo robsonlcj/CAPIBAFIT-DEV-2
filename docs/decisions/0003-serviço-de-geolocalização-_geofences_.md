@@ -12,4 +12,4 @@ A CapibaFit tem um diferencial de Valorização da Cidade que concede um bônus 
 
 ## Decision Outcome
 
-Chosen option: "Google Maps Platform", because O provedor deve ser capaz de definir e consultar zonas geográficas (latitude/longitude/raio). Implicações: Exige a criação de um banco de dados de "Geofences Capiba" que armazene as coordenadas e o raio de cada ponto turístico.
+Chosen option: "OpenStreetMap (OSM) / Leaflet", because O provedor deve ser capaz de definir e consultar zonas geográficas (latitude/longitude/raio). Implicações: Exige a criação de um banco de dados de "Geofences Capiba" que armazene as coordenadas e o raio de cada ponto turístico.
